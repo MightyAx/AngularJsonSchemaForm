@@ -25,6 +25,8 @@ import {
   isObject,
   JsonPointer
 } from './shared';
+import {buildLayoutForNestedArray} from './shared/layout.functions';
+
 import {
   enValidationMessages,
   frValidationMessages,
@@ -94,6 +96,7 @@ export class JsonSchemaFormService {
   layoutRefLibrary: any = { '': null }; // Library of layout nodes for adding to form
   templateRefLibrary: any = {}; // Library of formGroup templates for adding to form
   hasRootReference = false; // Does the form include a recursive reference to itself?
+  hasNestedArrayLayoutItem = false; // does the layout being processed (via buildLayout) has any nested array item?
 
   language = 'en-US'; // Does the form include a recursive reference to itself?
 
@@ -293,6 +296,9 @@ export class JsonSchemaFormService {
 
   buildLayout(widgetLibrary: any) {
     this.layout = buildLayout(this, widgetLibrary);
+    if (this.hasNestedArrayLayoutItem) {
+      this.layout = buildLayoutForNestedArray(this.layout, this, widgetLibrary);
+    }
   }
 
   setOptions(newOptions: any) {
@@ -385,7 +391,7 @@ export class JsonSchemaFormService {
     const index = typeof key === 'number' ? key + 1 + '' : key || '';
     expression = expression.trim();
     if (
-      (expression[0] === "'" || expression[0] === '"') &&
+      (expression[0] === '\'' || expression[0] === '"') &&
       expression[0] === expression[expression.length - 1] &&
       expression.slice(1, expression.length - 1).indexOf(expression[0]) === -1
     ) {
@@ -398,7 +404,7 @@ export class JsonSchemaFormService {
       return value;
     }
     if (
-      ['"', "'", ' ', '||', '&&', '+'].every(
+      ['"', '\'', ' ', '||', '&&', '+'].every(
         delim => expression.indexOf(delim) === -1
       )
     ) {
